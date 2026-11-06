@@ -49,6 +49,11 @@
             margin: 1.5rem 0;
         }
 
+        .empty {
+            grid-column: 1 / -1;
+            color: var(--muted);
+        }
+
         .card {
             background: var(--card);
             border-radius: 12px;
@@ -138,6 +143,10 @@
             border-color: var(--accent);
         }
 
+        .release {
+            color: #ff9b9b;
+        }
+
         .adopt {
             display: flex;
             flex-wrap: wrap;
@@ -169,7 +178,7 @@
         @endphp
 
         <div class="grid">
-            @foreach ($pets as $i => $pet)
+            @forelse ($pets as $pet)
             <article class="card">
                 <div class="icon">{{ $icons[$pet->getType()] ?? '🐾' }}</div>
                 <h2>
@@ -191,21 +200,29 @@
 
                 <div class="actions">
                     @foreach (['feed' => 'Feed 🍖', 'play' => 'Play 🎾', 'sleep' => 'Sleep 💤'] as $action => $label)
-                    <form method="post" action="{{ route('zoo.act', [$i, $action]) }}">
+                    <form method="post" action="{{ route('zoo.act', [$pet->getId(), $action]) }}">
                         @csrf
                         <button type="submit">{{ $label }}</button>
                     </form>
                     @endforeach
 
                     @if ($pet instanceof \App\Zoo\CanFly)
-                    <form method="post" action="{{ route('zoo.act', [$i, 'fly']) }}">
+                    <form method="post" action="{{ route('zoo.act', [$pet->getId(), 'fly']) }}">
                         @csrf
                         <button type="submit">Fly 🪽</button>
                     </form>
                     @endif
+
+                    <form method="post" action="{{ route('zoo.release', $pet->getId()) }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="release">Release 👋</button>
+                    </form>
                 </div>
             </article>
-            @endforeach
+            @empty
+            <p class="empty">The zoo is empty. Adopt a pet below, or press “Reset zoo” to bring back the starters.</p>
+            @endforelse
         </div>
 
         <h2>Adopt a new pet</h2>
@@ -221,6 +238,7 @@
             <button type="submit">Adopt</button>
         </form>
         @error('name') <p class="error">{{ $message }}</p> @enderror
+        @error('type') <p class="error">{{ $message }}</p> @enderror
 
         <form method="post" action="{{ route('zoo.reset') }}" class="reset">
             @csrf

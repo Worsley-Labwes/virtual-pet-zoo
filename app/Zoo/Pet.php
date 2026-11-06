@@ -9,6 +9,8 @@ abstract class Pet
 {
     use Hungry;
 
+    protected ?int $id = null; // NEW: null until the pet is saved in the database
+
     protected Mood $mood = Mood::Happy;
 
     public function __construct(protected string $name) {}
@@ -55,6 +57,16 @@ abstract class Pet
         };
     }
 
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
     public function getName(): string
     {
         return $this->name;
@@ -70,10 +82,11 @@ abstract class Pet
         return (new \ReflectionClass($this))->getShortName();
     }
 
-    // NEW: turn a pet into plain data so Laravel can keep it in the session...
+    // Turn a pet into plain data, ready to store...
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
             'type' => strtolower($this->getType()),
             'name' => $this->name,
             'hunger' => $this->hunger,
@@ -82,11 +95,12 @@ abstract class Pet
         ];
     }
 
-    // NEW: ...and rebuild it later. `new static` creates whichever child class
+    // ...and rebuild it later. `new static` creates whichever child class
     // was called: Dog::fromArray() gives a Dog, Cat::fromArray() gives a Cat.
     public static function fromArray(array $data): static
     {
         $pet = new static($data['name']);
+        $pet->id = isset($data['id']) ? (int) $data['id'] : null;
         $pet->hunger = (int) $data['hunger'];
         $pet->energy = (int) $data['energy'];
         $pet->mood = Mood::from($data['mood']);
